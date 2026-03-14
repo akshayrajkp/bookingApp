@@ -1,7 +1,9 @@
-package com.example.user.security;
+package com.example.user_service.security;
 
-import com.example.user.entity.User;
-import com.example.user.repository.UserRepository;
+
+
+import com.example.user_service.entity.User;
+import com.example.user_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;

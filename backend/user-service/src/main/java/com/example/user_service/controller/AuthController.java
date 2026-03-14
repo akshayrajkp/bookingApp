@@ -1,7 +1,10 @@
-package com.example.user.controller;
+package com.example.user_service.controller;
 
-import com.example.user.dto.*;
-import com.example.user.service.AuthService;
+
+import com.example.user_service.dto.AuthResponse;
+import com.example.user_service.dto.LoginRequest;
+import com.example.user_service.dto.RegisterRequest;
+import com.example.user_service.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

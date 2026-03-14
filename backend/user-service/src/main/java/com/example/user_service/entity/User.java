@@ -1,5 +1,4 @@
-package com.example.user.entity;
-
+package com.example.user_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,8 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
 
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,4 +20,5 @@ public class User {
     private String password;
 
     private String role; // USER / ADMIN
+
 }
