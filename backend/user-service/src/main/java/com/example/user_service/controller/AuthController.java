@@ -1,29 +1,24 @@
-package com.example.user_service.controller;
+package com.example.user.controller;
 
-import org.springframework.http.ResponseEntity;
+import com.example.user.dto.*;
+import com.example.user.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
-        // Simple mock logic; replace with real authentication
-        if ("user".equals(request.getUsername()) && "pass".equals(request.getPassword())) {
-            return ResponseEntity.ok("Login successful");
-        }
-        return ResponseEntity.badRequest().body("Invalid credentials");
+    private final AuthService authService;
+
+    @PostMapping("/register")
+    public String register(@RequestBody RegisterRequest request) {
+        return authService.register(request);
     }
-}
 
-class LoginRequest {
-    private String username;
-    private String password;
-
-    // Getters and setters
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    @PostMapping("/login")
+    public AuthResponse login(@RequestBody LoginRequest request) {
+        return authService.login(request);
+    }
 }
