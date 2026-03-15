@@ -24,7 +24,7 @@ export default function Navbar({ page, onNav }) {
       </nav>
 
       <div className="topbar-right">
-        <button className="btn-ghost">Sign in</button>
+        <button className="btn-ghost" onClick={() => onNav('login')}>Sign in</button>
         <button className="btn-solid" onClick={() => onNav('explore')}>Get Tickets</button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import LoginPage     from './pages/LoginPage';
 import Navbar        from './components/Navbar';
 import HomePage      from './pages/HomePage';
 import ExplorePage   from './pages/ExplorePage';
@@ -23,6 +24,7 @@ export default function App() {
     <>
       <Navbar page={page} onNav={onNav} />
 
+      {page === 'login'     && <LoginPage     onNav={onNav} />}
       {page === 'home'      && <HomePage      onNav={onNav} />}
       {page === 'explore'   && <ExplorePage   onNav={onNav} />}
       {page === 'detail'    && <DetailPage    event={data}  onNav={onNav} />}
