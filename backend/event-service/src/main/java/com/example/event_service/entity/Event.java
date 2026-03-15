@@ -3,6 +3,9 @@ package com.example.event_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Entity
 @Table(name = "events")
 @Getter
@@ -18,7 +21,24 @@ public class Event {
 
     private String name;
 
+    private String location;
+
+    private String category;
+
+    private double price;
+
+    @Column(length = 2000)
+    private String description;
+
+    private LocalDateTime eventTime;
+
     private int totalSeats;
 
-    private int availableSeats;
+    @ElementCollection
+    @CollectionTable(name = "event_available_seats",
+            joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "seat_number")
+    private List<String> availableSeats;
+
+    private String imageUrl;
 }
