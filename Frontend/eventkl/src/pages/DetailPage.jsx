@@ -1,30 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../styles/DetailPage.css';
 import '../styles/shared.css';
 
-const SEAT_ROWS = [
-  ['A1', 'A2', 'A3', 'A4', 'A5'],
-  ['B1', 'B2', 'B3', 'B4', 'B5'],
-  ['C1', 'C2', 'C3', 'C4', 'C5'],
-];
-const TAKEN = ['A2', 'A5', 'B3', 'C1', 'C4'];
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function formatDate(raw) {
+  if (!raw) return '';
+  return new Date(raw).toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+}
+
+function formatTime(raw) {
+  if (!raw) return '';
+  return new Date(raw).toLocaleTimeString('en-IN', {
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+// ── component ─────────────────────────────────────────────────────────────────
 
 export default function DetailPage({ event, onNav }) {
-  const [qty, setQty]         = useState(1);
-  const [selSeat, setSelSeat] = useState(null);
+  const [qty,       setQty]       = useState(1);
+  const [selSeats,  setSelSeats]  = useState([]);
 
-  const price    = event.price === 'Free' ? 0 : parseInt(event.price.replace('₹', ''));
-  const subtotal = price * qty;
-  const fee      = Math.round(subtotal * 0.03);
-  const total    = subtotal + fee;
+  // ── map API fields from entity ──
+  const name           = event.name            ?? 'Untitled Event';
+  const category       = event.category        ?? '';
+  const venue          = event.location        ?? '';
+  const rawTime        = event.eventTime       ?? '';
+  const rawPrice       = event.price           ?? 0;
+  const desc           = event.description     ?? '';
+  const totalSeats     = event.totalSeats      ?? 0;
+  const availableSeats = Array.isArray(event.availableSeats)
+                           ? event.availableSeats
+                           : [];
+
+  // ── derived display values ──
+  const displayDate  = formatDate(rawTime);
+  const displayTime  = formatTime(rawTime);
+  const price        = Number(rawPrice);
+  const displayPrice = price === 0 ? 'Free' : `₹${price}`;
+  const subtotal     = price * qty;
+  const fee          = Math.round(subtotal * 0.03);
+  const total        = subtotal + fee;
+
+  // ── build seat map ──
+  // totalSeats=10 → A1-A5, B1-B5
+  const allSeats = Array.from({ length: totalSeats }, (_, i) => {
+    const row = String.fromCharCode(65 + Math.floor(i / 5));
+    const col = (i % 5) + 1;
+    return `${row}${col}`;
+  });
+
+  // a seat is TAKEN if it is NOT in the availableSeats array
+  const takenSeats = allSeats.filter(s => !availableSeats.includes(s));
+
+  // group into rows of 5 for display
+  const seatRows = [];
+  for (let i = 0; i < allSeats.length; i += 5) {
+    seatRows.push(allSeats.slice(i, i + 5));
+  }
+
+  // trim selected seats if qty is reduced
+  useEffect(() => {
+    setSelSeats(prev => prev.slice(0, qty));
+  }, [qty]);
+
+  // ── seat toggle handler ──
+  const toggleSeat = (s) => {
+    setSelSeats(prev => {
+      if (prev.includes(s)) {
+        // deselect
+        return prev.filter(x => x !== s);
+      }
+      if (prev.length < qty) {
+        // select if under qty limit
+        return [...prev, s];
+      }
+      // already at limit — swap last selected with new one
+      return [...prev.slice(0, -1), s];
+    });
+  };
 
   return (
     <div className="detail-layout">
 
       {/* ── MAIN COLUMN ── */}
       <div className="detail-main">
+
         <div className="detail-breadcrumb" onClick={() => onNav('home')}>
-          ← Events <span>/ {event.name}</span>
+          ← Events <span>/ {name}</span>
         </div>
 
         {/* Hero visual */}
@@ -37,7 +103,8 @@ export default function DetailPage({ event, onNav }) {
             }} />
             <div style={{
               position: 'absolute', bottom: -40, right: -40, width: 380, height: 340,
-              background: 'var(--ink)', borderRadius: '60% 40% 70% 30% / 50% 60% 40% 55%', opacity: .07,
+              background: 'var(--ink)', borderRadius: '60% 40% 70% 30% / 50% 60% 40% 55%',
+              opacity: .07,
             }} />
             <div style={{
               position: 'absolute', bottom: -30, right: -20, width: 300, height: 260,
@@ -46,40 +113,58 @@ export default function DetailPage({ event, onNav }) {
           </div>
         </div>
 
-        <div className="detail-cat">{event.category}</div>
-        <h1 className="detail-h1">{event.name}</h1>
+        {/* Category + title */}
+        <div className="detail-cat">{category}</div>
+        <h1 className="detail-h1">{name}</h1>
 
+        {/* Info row */}
         <div className="detail-info-row">
           <div className="detail-info-item">
             <span className="detail-info-icon">📅</span>
-            <span className="detail-info-text">{event.date}, 2025 at 7:00 PM</span>
+            <span className="detail-info-text">
+              {displayDate}{displayTime ? ` at ${displayTime}` : ''}
+            </span>
           </div>
-          <div className="detail-info-item">
-            <span className="detail-info-icon">📍</span>
-            <span className="detail-info-text">{event.venue}</span>
-          </div>
+          {venue && (
+            <div className="detail-info-item">
+              <span className="detail-info-icon">📍</span>
+              <span className="detail-info-text">{venue}</span>
+            </div>
+          )}
           <div className="detail-info-item">
             <span className="detail-info-icon">🎟</span>
-            <span className="detail-info-text">{event.seats} seats remaining</span>
+            <span className="detail-info-text">
+              {availableSeats.length} of {totalSeats} seats remaining
+            </span>
           </div>
         </div>
 
         <div className="detail-divider" />
 
+        {/* Description */}
         <p className="detail-body-text">
-          An extraordinary evening curated for those who appreciate culture at its finest.
-          This event brings together Kerala's top artists for a night you will not forget.
-          Doors open 30 minutes before the show. Photography is permitted during the first
-          15 minutes only. Dress code: smart casual.
+          {desc || 'An extraordinary evening curated for those who appreciate culture at its finest. Doors open 30 minutes before the show. Photography is permitted during the first 15 minutes only. Dress code: smart casual.'}
         </p>
 
         <div className="detail-divider" />
 
-        {/* Seat map */}
+        {/* ── SEAT MAP ── */}
         <div className="seat-section-title">Choose Your Seat</div>
+
+        <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
+          {availableSeats.length} of {totalSeats} seats available
+          {qty > 1 && (
+            <span style={{ marginLeft: 12, color: 'var(--ink)', fontWeight: 500 }}>
+              · Select {qty} seats ({selSeats.length} of {qty} chosen)
+            </span>
+          )}
+        </div>
+
         <div className="seat-legend">
           <div className="seat-leg-item">
-            <div className="seat-dot" style={{ background: 'var(--paper)', border: '1.5px solid var(--border)' }} />
+            <div className="seat-dot" style={{
+              background: 'var(--paper)', border: '1.5px solid var(--border)',
+            }} />
             Available
           </div>
           <div className="seat-leg-item">
@@ -92,57 +177,123 @@ export default function DetailPage({ event, onNav }) {
           </div>
         </div>
 
-        <div className="seat-grid">
-          {SEAT_ROWS.map((row, ri) => (
-            <div className="seat-row" key={ri}>
-              <div className="seat-row-label">{['A', 'B', 'C'][ri]}</div>
-              {row.map(s => (
-                <button
-                  key={s}
-                  className={`seat-btn ${TAKEN.includes(s) ? 'taken' : selSeat === s ? 'sel' : ''}`}
-                  disabled={TAKEN.includes(s)}
-                  onClick={() => setSelSeat(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
+        {seatRows.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--muted)' }}>
+            No seat data available.
+          </p>
+        ) : (
+          <div className="seat-grid">
+            {seatRows.map((row, ri) => (
+              <div className="seat-row" key={ri}>
+                <div className="seat-row-label">{row[0][0]}</div>
+                {row.map(s => (
+                  <button
+                    key={s}
+                    className={`seat-btn ${
+                      takenSeats.includes(s)  ? 'taken'
+                      : selSeats.includes(s)  ? 'sel'
+                      : ''
+                    }`}
+                    disabled={takenSeats.includes(s)}
+                    onClick={() => toggleSeat(s)}
+                    title={
+                      takenSeats.includes(s)  ? 'Seat taken'
+                      : selSeats.includes(s)  ? 'Click to deselect'
+                      : selSeats.length >= qty ? `Select ${qty} seats max`
+                      : 'Click to select'
+                    }
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
       </div>
 
       {/* ── STICKY SIDE PANEL ── */}
       <div className="detail-side">
         <div className="side-event-label">You're booking</div>
-        <div className="side-event-name">{event.name}</div>
+        <div className="side-event-name">{name}</div>
 
-        {/* Qty */}
+        {/* Qty picker */}
         <div className="qty-label">Tickets</div>
         <div className="qty-ctrl">
-          <button className="qty-btn" onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
+          <button
+            className="qty-btn"
+            onClick={() => setQty(q => Math.max(1, q - 1))}
+          >
+            −
+          </button>
           <span className="qty-num">{qty}</span>
-          <button className="qty-btn" onClick={() => setQty(q => Math.min(8, q + 1))}>+</button>
+          <button
+            className="qty-btn"
+            onClick={() => setQty(q => Math.min(availableSeats.length || 8, q + 1))}
+          >
+            +
+          </button>
         </div>
 
-        {/* Summary */}
+        {/* Selected seats indicator */}
+        {selSeats.length > 0 && (
+          <div style={{
+            fontSize: 12, color: 'var(--muted)',
+            marginBottom: 14, padding: '10px 14px',
+            background: 'var(--surface)', borderRadius: 8,
+            lineHeight: 1.7,
+          }}>
+            Selected seats:{' '}
+            <strong style={{ color: 'var(--ink)' }}>
+              {selSeats.join(', ')}
+            </strong>
+          </div>
+        )}
+
+        {/* Hint when seats not fully selected */}
+        {selSeats.length < qty && (
+          <div style={{
+            fontSize: 12, color: 'var(--muted)',
+            marginBottom: 14, padding: '10px 14px',
+            background: 'var(--surface)', borderRadius: 8,
+            borderLeft: '3px solid var(--border)',
+          }}>
+            Please select {qty - selSeats.length} more seat{qty - selSeats.length > 1 ? 's' : ''} from the map
+          </div>
+        )}
+
+        {/* Price summary */}
         <div className="side-summary">
           <div className="side-sum-row">
-            <span className="side-sum-label">{qty} × {event.price}</span>
-            <span className="side-sum-val">₹{subtotal}</span>
+            <span className="side-sum-label">{qty} × {displayPrice}</span>
+            <span className="side-sum-val">
+              {price === 0 ? 'Free' : `₹${subtotal}`}
+            </span>
           </div>
           <div className="side-sum-row">
-            <span className="side-sum-label">Booking fee</span>
+            <span className="side-sum-label">Booking fee (3%)</span>
             <span className="side-sum-val">₹{fee}</span>
           </div>
           <div className="side-sum-divider" />
           <div className="side-sum-row">
             <span className="side-sum-total-label">Total</span>
-            <span className="side-sum-total-val">₹{total}</span>
+            <span className="side-sum-total-val">
+              {price === 0 ? 'Free' : `₹${total}`}
+            </span>
           </div>
         </div>
 
-        <button className="btn-book" onClick={() => onNav('booking', { event, qty })}>
-          Reserve Tickets
+        <button
+          className="btn-book"
+          style={{ opacity: selSeats.length < qty ? 0.5 : 1 }}
+          disabled={selSeats.length < qty}
+          onClick={() => onNav('booking', { event, qty, seats: selSeats })}
+        >
+          {selSeats.length < qty
+            ? `Select ${qty - selSeats.length} more seat${qty - selSeats.length > 1 ? 's' : ''}`
+            : 'Reserve Tickets'
+          }
         </button>
         <button className="btn-book-ghost">Save for Later</button>
 

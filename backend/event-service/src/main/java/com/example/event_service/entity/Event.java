@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "events")
@@ -33,7 +34,11 @@ public class Event {
 
     private int totalSeats;
 
-    private int availableSeats;
+    @ElementCollection
+    @CollectionTable(name = "event_available_seats",
+            joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "seat_number")
+    private List<String> availableSeats;
 
     private String imageUrl;
 }

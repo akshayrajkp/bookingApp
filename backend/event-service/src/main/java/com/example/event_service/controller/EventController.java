@@ -15,26 +15,31 @@ public class EventController {
 
     private final EventService eventService;
 
+    // create event
     @PostMapping
     public Event createEvent(@RequestBody EventRequestDTO request){
         return eventService.createEvent(request);
     }
 
+    // list events
     @GetMapping
-    public List<Event> getAllEvents(){
+    public List<Event> getEvents(){
         return eventService.getAllEvents();
     }
 
+    // check availability
     @GetMapping("/{eventId}/availability")
-    public Boolean checkAvailability(@PathVariable Long eventId){
+    public boolean checkAvailability(@PathVariable Long eventId){
         return eventService.checkAvailability(eventId);
     }
 
-    @PostMapping("/{eventId}/reserve")
-    public String reserveSeat(@PathVariable Long eventId){
+    // reserve seat
+    @PostMapping("/{eventId}/reserve/{seatNumber}")
+    public String reserveSeat(@PathVariable Long eventId,
+                              @PathVariable String seatNumber){
 
-        eventService.reserveSeat(eventId);
+        eventService.reserveSeat(eventId, seatNumber);
 
-        return "Seat reserved";
+        return "Seat reserved successfully";
     }
 }

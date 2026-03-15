@@ -14,6 +14,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
 
+    // create event
     public Event createEvent(EventRequestDTO request){
 
         Event event = Event.builder()
@@ -24,35 +25,42 @@ public class EventService {
                 .description(request.getDescription())
                 .eventTime(request.getEventTime())
                 .totalSeats(request.getTotalSeats())
-                .availableSeats(request.getTotalSeats())
+                .availableSeats(request.getAvailableSeats())
                 .imageUrl(request.getImageUrl())
                 .build();
 
         return eventRepository.save(event);
     }
 
+    // get all events
     public List<Event> getAllEvents(){
         return eventRepository.findAll();
     }
 
+    // check seat availability
     public boolean checkAvailability(Long eventId){
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        return event.getAvailableSeats() > 0;
+        return !event.getAvailableSeats().isEmpty();
     }
 
-    public void reserveSeat(Long eventId){
+    // reserve specific seat
+    public void reserveSeat(Long eventId, String seatNumber){
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        if(event.getAvailableSeats() <= 0){
-            throw new RuntimeException("Event is fully booked");
+        List<String> seats = event.getAvailableSeats();
+
+        if(!seats.contains(seatNumber)){
+            throw new RuntimeException("Seat not available");
         }
 
-        event.setAvailableSeats(event.getAvailableSeats() - 1);
+        seats.remove(seatNumber);
+
+        event.setAvailableSeats(seats);
 
         eventRepository.save(event);
     }
