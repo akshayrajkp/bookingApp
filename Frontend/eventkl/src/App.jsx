@@ -8,6 +8,7 @@ import BookingPage   from './pages/BookingPage';
 import PaymentPage   from './pages/PaymentPage';
 import ConfirmPage   from './pages/ConfirmPage';
 import MyTicketsPage from './pages/MyTicketsPage';
+import ProfilePage   from './pages/ProfilePage';
 import './styles/globals.css';
 import './styles/shared.css';
 
@@ -33,6 +34,7 @@ export default function App() {
       {page === 'payment'   && <PaymentPage   data={data}   onNav={onNav} />}
       {page === 'confirm'   && <ConfirmPage   data={data}   onNav={onNav} />}
       {page === 'mytickets' && <MyTicketsPage onNav={onNav} />}
+      {page === 'profile'   && <ProfilePage   onNav={onNav} />}
     </>
   );
 }

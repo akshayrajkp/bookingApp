@@ -23,7 +23,8 @@ public class AuthService {
     public String register(RegisterRequest request) {
 
         User user = User.builder()
-                .name(request.getFirstName() + " " + request.getLastName())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role("USER")
@@ -42,7 +43,7 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user);
 
         return AuthResponse.builder()
                 .token(token)
