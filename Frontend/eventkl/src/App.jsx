@@ -5,6 +5,7 @@ import HomePage      from './pages/HomePage';
 import ExplorePage   from './pages/ExplorePage';
 import DetailPage    from './pages/DetailPage';
 import BookingPage   from './pages/BookingPage';
+import PaymentPage   from './pages/PaymentPage';
 import ConfirmPage   from './pages/ConfirmPage';
 import MyTicketsPage from './pages/MyTicketsPage';
 import './styles/globals.css';
@@ -29,6 +30,7 @@ export default function App() {
       {page === 'explore'   && <ExplorePage   onNav={onNav} />}
       {page === 'detail'    && <DetailPage    event={data}  onNav={onNav} />}
       {page === 'booking'   && <BookingPage   data={data}   onNav={onNav} />}
+      {page === 'payment'   && <PaymentPage   data={data}   onNav={onNav} />}
       {page === 'confirm'   && <ConfirmPage   data={data}   onNav={onNav} />}
       {page === 'mytickets' && <MyTicketsPage onNav={onNav} />}
     </>

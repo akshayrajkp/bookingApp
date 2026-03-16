@@ -2,8 +2,8 @@ package com.example.booking_service.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
@@ -19,9 +19,21 @@ public class Booking {
     private Long id;
 
     private Long userId;
+
     private Long eventId;
 
-    private String status; // CONFIRMED / CANCELLED / WAITLIST
+    private int quantity;
 
-    private LocalDateTime createdAt;
+    @ElementCollection
+    @CollectionTable(name = "booking_seats", joinColumns = @JoinColumn(name = "booking_id"))
+    @Column(name = "seat_number")
+    private List<String> seats;
+
+    private String paymentMethod;
+
+    private String status;          // "CONFIRMED", "CANCELLED"
+
+    private double totalAmount;
+
+    private LocalDateTime bookingTime;
 }

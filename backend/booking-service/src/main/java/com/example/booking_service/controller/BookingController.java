@@ -14,13 +14,12 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
-    public BookingResponseDTO createBooking(@RequestBody BookingRequestDTO request) {
+    public BookingResponseDTO bookTicket(@RequestBody BookingRequestDTO request){
         return bookingService.createBooking(request);
     }
 
-    @DeleteMapping("/{id}")
-    public String cancelBooking(@PathVariable Long id) {
-        bookingService.cancelBooking(id);
-        return "Booking Cancelled";
+    @DeleteMapping("/{bookingId}")
+    public BookingResponseDTO cancelBooking(@PathVariable Long bookingId){
+        return bookingService.cancelBooking(bookingId);
     }
 }

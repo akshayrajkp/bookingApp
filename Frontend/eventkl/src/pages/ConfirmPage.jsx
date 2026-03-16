@@ -3,7 +3,8 @@ import '../styles/shared.css';
 
 export default function ConfirmPage({ data, onNav }) {
   const { event, qty } = data;
-  const bookingId = `EVK-${Math.floor(Math.random() * 90000) + 10000}`;
+  const bookingId  = data.bookingId  ?? `EVK-${Math.floor(Math.random() * 90000) + 10000}`;
+  const totalAmount = data.totalAmount;
 
   return (
     <div className="confirm-page">

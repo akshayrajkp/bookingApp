@@ -8,5 +8,5 @@ public interface BookingService {
 
     BookingResponseDTO createBooking(BookingRequestDTO request);
 
-    void cancelBooking(Long bookingId);
+    BookingResponseDTO cancelBooking(Long bookingId);
 }
