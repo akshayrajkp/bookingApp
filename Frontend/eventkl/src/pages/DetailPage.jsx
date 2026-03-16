@@ -21,29 +21,29 @@ function formatTime(raw) {
 // ── component ─────────────────────────────────────────────────────────────────
 
 export default function DetailPage({ event, onNav }) {
-  const [qty,       setQty]       = useState(1);
-  const [selSeats,  setSelSeats]  = useState([]);
+  const [selSeats, setSelSeats] = useState([]);
 
   // ── map API fields from entity ──
-  const name           = event.name            ?? 'Untitled Event';
-  const category       = event.category        ?? '';
-  const venue          = event.location        ?? '';
-  const rawTime        = event.eventTime       ?? '';
-  const rawPrice       = event.price           ?? 0;
-  const desc           = event.description     ?? '';
-  const totalSeats     = event.totalSeats      ?? 0;
+  const name = event.name ?? 'Untitled Event';
+  const category = event.category ?? '';
+  const venue = event.location ?? '';
+  const rawTime = event.eventTime ?? '';
+  const rawPrice = event.price ?? 0;
+  const desc = event.description ?? '';
+  const totalSeats = event.totalSeats ?? 0;
   const availableSeats = Array.isArray(event.availableSeats)
-                           ? event.availableSeats
-                           : [];
+    ? event.availableSeats
+    : [];
 
   // ── derived display values ──
-  const displayDate  = formatDate(rawTime);
-  const displayTime  = formatTime(rawTime);
-  const price        = Number(rawPrice);
+  const qty = selSeats.length === 0 ? 1 : selSeats.length;
+  const displayDate = formatDate(rawTime);
+  const displayTime = formatTime(rawTime);
+  const price = Number(rawPrice);
   const displayPrice = price === 0 ? 'Free' : `₹${price}`;
-  const subtotal     = price * qty;
-  const fee          = Math.round(subtotal * 0.03);
-  const total        = subtotal + fee;
+  const subtotal = price * qty;
+  const fee = Math.round(subtotal * 0.03);
+  const total = subtotal + fee;
 
   // ── build seat map ──
   // totalSeats=10 → A1-A5, B1-B5
@@ -62,24 +62,19 @@ export default function DetailPage({ event, onNav }) {
     seatRows.push(allSeats.slice(i, i + 5));
   }
 
-  // trim selected seats if qty is reduced
-  useEffect(() => {
-    setSelSeats(prev => prev.slice(0, qty));
-  }, [qty]);
-
   // ── seat toggle handler ──
   const toggleSeat = (s) => {
     setSelSeats(prev => {
+      // If already selected, remove it
       if (prev.includes(s)) {
-        // deselect
         return prev.filter(x => x !== s);
       }
-      if (prev.length < qty) {
-        // select if under qty limit
+      // Otherwise, add it to selected seats (up to a max of 8 tickets per booking logic)
+      if (prev.length < 8) {
         return [...prev, s];
       }
-      // already at limit — swap last selected with new one
-      return [...prev.slice(0, -1), s];
+      // If they try to select more than 8, just ignore or alert (ignoring here)
+      return prev;
     });
   };
 
@@ -153,11 +148,6 @@ export default function DetailPage({ event, onNav }) {
 
         <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
           {availableSeats.length} of {totalSeats} seats available
-          {qty > 1 && (
-            <span style={{ marginLeft: 12, color: 'var(--ink)', fontWeight: 500 }}>
-              · Select {qty} seats ({selSeats.length} of {qty} chosen)
-            </span>
-          )}
         </div>
 
         <div className="seat-legend">
@@ -189,18 +179,17 @@ export default function DetailPage({ event, onNav }) {
                 {row.map(s => (
                   <button
                     key={s}
-                    className={`seat-btn ${
-                      takenSeats.includes(s)  ? 'taken'
-                      : selSeats.includes(s)  ? 'sel'
-                      : ''
-                    }`}
+                    className={`seat-btn ${takenSeats.includes(s) ? 'taken'
+                        : selSeats.includes(s) ? 'sel'
+                          : ''
+                      }`}
                     disabled={takenSeats.includes(s)}
                     onClick={() => toggleSeat(s)}
                     title={
-                      takenSeats.includes(s)  ? 'Seat taken'
-                      : selSeats.includes(s)  ? 'Click to deselect'
-                      : selSeats.length >= qty ? `Select ${qty} seats max`
-                      : 'Click to select'
+                      takenSeats.includes(s) ? 'Seat taken'
+                        : selSeats.includes(s) ? 'Click to deselect'
+                          : selSeats.length >= qty ? `Select ${qty} seats max`
+                            : 'Click to select'
                     }
                   >
                     {s}
@@ -219,21 +208,9 @@ export default function DetailPage({ event, onNav }) {
         <div className="side-event-name">{name}</div>
 
         {/* Qty picker */}
-        <div className="qty-label">Tickets</div>
-        <div className="qty-ctrl">
-          <button
-            className="qty-btn"
-            onClick={() => setQty(q => Math.max(1, q - 1))}
-          >
-            −
-          </button>
-          <span className="qty-num">{qty}</span>
-          <button
-            className="qty-btn"
-            onClick={() => setQty(q => Math.min(availableSeats.length || 8, q + 1))}
-          >
-            +
-          </button>
+        <div className="qty-label">Tickets Selected</div>
+        <div className="qty-ctrl" style={{ justifyContent: 'center', background: 'transparent', border: '1px solid var(--border)' }}>
+          <span className="qty-num">{selSeats.length}</span>
         </div>
 
         {/* Selected seats indicator */}
@@ -251,17 +228,7 @@ export default function DetailPage({ event, onNav }) {
           </div>
         )}
 
-        {/* Hint when seats not fully selected */}
-        {selSeats.length < qty && (
-          <div style={{
-            fontSize: 12, color: 'var(--muted)',
-            marginBottom: 14, padding: '10px 14px',
-            background: 'var(--surface)', borderRadius: 8,
-            borderLeft: '3px solid var(--border)',
-          }}>
-            Please select {qty - selSeats.length} more seat{qty - selSeats.length > 1 ? 's' : ''} from the map
-          </div>
-        )}
+
 
         {/* Price summary */}
         <div className="side-summary">
@@ -286,12 +253,12 @@ export default function DetailPage({ event, onNav }) {
 
         <button
           className="btn-book"
-          style={{ opacity: selSeats.length < qty ? 0.5 : 1 }}
-          disabled={selSeats.length < qty}
-          onClick={() => onNav('payment', { event, qty, seats: selSeats })}
+          style={{ opacity: selSeats.length === 0 ? 0.5 : 1 }}
+          disabled={selSeats.length === 0}
+          onClick={() => onNav('payment', { event, qty: selSeats.length, seats: selSeats })}
         >
-          {selSeats.length < qty
-            ? `Select ${qty - selSeats.length} more seat${qty - selSeats.length > 1 ? 's' : ''}`
+          {selSeats.length === 0
+            ? 'Select seats from map'
             : 'Reserve Tickets'
           }
         </button>
