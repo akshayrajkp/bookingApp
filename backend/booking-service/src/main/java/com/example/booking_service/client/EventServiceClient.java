@@ -6,11 +6,12 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "event-service")
 public interface EventServiceClient {
 
-    @PostMapping("/events/{eventId}/reserve/{seatNumber}")
-    void reserveSeat(@PathVariable Long eventId,
-                     @PathVariable String seatNumber);
+    @GetMapping("/events/{eventId}/availability")
+    Boolean checkAvailability(@PathVariable Long eventId);
 
-    @PostMapping("/events/{eventId}/release/{seatNumber}")
-    void releaseSeat(@PathVariable Long eventId,
-                     @PathVariable String seatNumber);
+    @PostMapping("/events/{eventId}/reserve")
+    String reserveSeat(@PathVariable Long eventId, @RequestParam String seat);
+
+    @PostMapping("/events/{eventId}/release")
+    String releaseSeat(@PathVariable Long eventId, @RequestParam String seat);
 }

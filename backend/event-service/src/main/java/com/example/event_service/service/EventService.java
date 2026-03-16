@@ -5,7 +5,9 @@ import com.example.event_service.entity.Event;
 import com.example.event_service.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -15,7 +17,7 @@ public class EventService {
     private final EventRepository eventRepository;
 
     // create event
-    public Event createEvent(EventRequestDTO request){
+    public Event createEvent(EventRequestDTO request) {
 
         Event event = Event.builder()
                 .name(request.getName())
@@ -25,7 +27,7 @@ public class EventService {
                 .description(request.getDescription())
                 .eventTime(request.getEventTime())
                 .totalSeats(request.getTotalSeats())
-                .availableSeats(request.getAvailableSeats())
+                .availableSeats(new ArrayList<>(request.getAvailableSeats()))
                 .imageUrl(request.getImageUrl())
                 .build();
 
@@ -33,35 +35,74 @@ public class EventService {
     }
 
     // get all events
-    public List<Event> getAllEvents(){
+    public List<Event> getAllEvents() {
         return eventRepository.findAll();
     }
 
     // check seat availability
-    public boolean checkAvailability(Long eventId){
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
-
-        return !event.getAvailableSeats().isEmpty();
-    }
-
-    // reserve specific seat
-    public void reserveSeat(Long eventId, String seatNumber){
+    @Transactional
+    public boolean checkAvailability(Long eventId) {
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
         List<String> seats = event.getAvailableSeats();
 
-        if(!seats.contains(seatNumber)){
-            throw new RuntimeException("Seat not available");
+        System.out.println("checkAvailability - eventId: " + eventId
+                + " | available seats count: " + seats.size());
+
+        return !seats.isEmpty();
+    }
+
+    // reserve specific seat
+    @Transactional
+    public void reserveSeat(Long eventId, String seatNumber) {
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        // get a mutable copy of the seats list
+        List<String> seats = new ArrayList<>(event.getAvailableSeats());
+
+        System.out.println("reserveSeat - eventId: " + eventId
+                + " | seatNumber: " + seatNumber
+                + " | availableSeats in DB: " + seats);
+
+        // case-insensitive match to avoid "A1" vs "a1" mismatch
+        String matchedSeat = seats.stream()
+                .filter(s -> s.equalsIgnoreCase(seatNumber))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        "Seat " + seatNumber + " not available. Available: " + seats));
+
+        seats.remove(matchedSeat);
+        event.setAvailableSeats(seats);
+        eventRepository.save(event);
+
+        System.out.println("reserveSeat - seat " + matchedSeat
+                + " reserved. Remaining seats: " + seats);
+    }
+
+    // release specific seat (called on booking cancellation)
+    @Transactional
+    public void releaseSeat(Long eventId, String seatNumber) {
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        List<String> seats = new ArrayList<>(event.getAvailableSeats());
+
+        if (seats.contains(seatNumber)) {
+            System.out.println("releaseSeat - seat " + seatNumber
+                    + " already available, skipping");
+            return;
         }
 
-        seats.remove(seatNumber);
-
+        seats.add(seatNumber);
         event.setAvailableSeats(seats);
-
         eventRepository.save(event);
+
+        System.out.println("releaseSeat - seat " + seatNumber
+                + " released. Available seats now: " + seats);
     }
 }
