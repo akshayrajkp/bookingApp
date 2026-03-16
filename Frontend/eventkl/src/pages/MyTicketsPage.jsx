@@ -3,6 +3,7 @@ import EventVisual from '../components/EventVisual';
 import events from '../data/events';
 import '../styles/ConfirmAndProfile.css';
 import '../styles/shared.css';
+import { cancelBooking } from '../api/bookingApi';
 
 const MENU_ITEMS = [
   { key: 'upcoming', icon: '🎟', label: 'My Tickets'       },
@@ -21,6 +22,17 @@ export default function MyTicketsPage({ onNav }) {
   const [tab, setTab] = useState('upcoming');
 
   const displayEvents = tab === 'upcoming' ? events.slice(0, 3) : PAST_EVENTS;
+
+  const handleCancel = async (bookingId) => {
+  if (!window.confirm('Cancel this booking?')) return;
+  try {
+    await cancelBooking(bookingId);
+    // refresh the tickets list
+    setTickets(prev => prev.filter(t => t.id !== bookingId));
+  } catch (err) {
+    alert('Could not cancel booking.');
+  }
+};
 
   return (
     <div className="profile-layout">

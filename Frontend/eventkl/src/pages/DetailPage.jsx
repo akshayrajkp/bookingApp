@@ -288,7 +288,7 @@ export default function DetailPage({ event, onNav }) {
           className="btn-book"
           style={{ opacity: selSeats.length < qty ? 0.5 : 1 }}
           disabled={selSeats.length < qty}
-          onClick={() => onNav('booking', { event, qty, seats: selSeats })}
+          onClick={() => onNav('payment', { event, qty, seats: selSeats })}
         >
           {selSeats.length < qty
             ? `Select ${qty - selSeats.length} more seat${qty - selSeats.length > 1 ? 's' : ''}`
