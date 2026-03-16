@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,11 +35,16 @@ public class Event {
 
     private int totalSeats;
 
-    @ElementCollection
-    @CollectionTable(name = "event_available_seats",
-            joinColumns = @JoinColumn(name = "event_id"))
+    // EAGER ensures seats are loaded immediately with the event
+    // without this, getAvailableSeats() returns empty list outside a transaction
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "event_available_seats",
+            joinColumns = @JoinColumn(name = "event_id")
+    )
     @Column(name = "seat_number")
-    private List<String> availableSeats;
+    @Builder.Default
+    private List<String> availableSeats = new ArrayList<>();
 
     private String imageUrl;
 }

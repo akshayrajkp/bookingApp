@@ -17,29 +17,39 @@ public class EventController {
 
     // create event
     @PostMapping
-    public Event createEvent(@RequestBody EventRequestDTO request){
+    public Event createEvent(@RequestBody EventRequestDTO request) {
         return eventService.createEvent(request);
     }
 
-    // list events
+    // get all events
     @GetMapping
-    public List<Event> getEvents(){
+    public List<Event> getAllEvents() {
         return eventService.getAllEvents();
     }
 
-    // check availability
+    // check if event has any available seats
     @GetMapping("/{eventId}/availability")
-    public boolean checkAvailability(@PathVariable Long eventId){
+    public Boolean checkAvailability(@PathVariable Long eventId) {
         return eventService.checkAvailability(eventId);
     }
 
-    // reserve seat
-    @PostMapping("/{eventId}/reserve/{seatNumber}")
-    public String reserveSeat(@PathVariable Long eventId,
-                              @PathVariable String seatNumber){
+    // reserve a specific seat — called by booking-service via Feign
+    @PostMapping("/{eventId}/reserve")
+    public String reserveSeat(
+            @PathVariable Long eventId,
+            @RequestParam String seat
+    ) {
+        eventService.reserveSeat(eventId, seat);
+        return "Seat " + seat + " reserved successfully";
+    }
 
-        eventService.reserveSeat(eventId, seatNumber);
-
-        return "Seat reserved successfully";
+    // release a specific seat — called by booking-service on cancellation
+    @PostMapping("/{eventId}/release")
+    public String releaseSeat(
+            @PathVariable Long eventId,
+            @RequestParam String seat
+    ) {
+        eventService.releaseSeat(eventId, seat);
+        return "Seat " + seat + " released successfully";
     }
 }
