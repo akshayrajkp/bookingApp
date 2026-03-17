@@ -20,6 +20,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api/, ''),
       },
+      '/api/waitlist': {
+        target: 'http://localhost:8085',
+        changeOrigin: true,
+        rewrite: p => p.replace(/^\/api/, ''),
+      },
     }
   }
 });

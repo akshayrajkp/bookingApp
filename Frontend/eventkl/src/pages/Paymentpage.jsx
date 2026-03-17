@@ -19,6 +19,7 @@ export default function PaymentPage({ data, onNav }) {
   const [payMethod, setPayMethod] = useState('card');
   const [loading,   setLoading]   = useState(false);
   const [error,     setError]     = useState('');
+  const [waitlisted, setWaitlisted] = useState(false);
 
   // card fields
   const [cardNum,  setCardNum]  = useState('');
@@ -91,6 +92,15 @@ export default function PaymentPage({ data, onNav }) {
         paymentMethod: payMethod,
         totalAmount:   total,
       });
+
+      // ── handle WAITLISTED response ──
+      if (res.data.status === 'WAITLISTED') {
+        setWaitlisted(true);
+        setLoading(false);
+        return;
+      }
+
+      // ── handle CONFIRMED response ──
       onNav('confirm', {
         event,
         qty,
@@ -99,12 +109,103 @@ export default function PaymentPage({ data, onNav }) {
         totalAmount: res.data.totalAmount ?? total,
         status:      res.data.status,
       });
+
     } catch (err) {
+      console.error('Payment error:', err.response?.data);
       setError(err.response?.data?.message || 'Payment failed. Please try again.');
       setLoading(false);
     }
   };
 
+  // ── WAITLISTED STATE ── shown instead of form when event is full
+  if (waitlisted) {
+    return (
+      <div className="booking-layout">
+        <div className="booking-main">
+          <div style={{ maxWidth: 480 }}>
+
+            {/* icon */}
+            <div style={{
+              width: 64, height: 64,
+              background: 'var(--surface)',
+              border: '1.5px solid var(--border)',
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 28, marginBottom: 28,
+            }}>
+              ⏳
+            </div>
+
+            <h2 className="booking-h2">You're on the waitlist.</h2>
+            <p className="booking-sub">
+              This event is currently full. We've added you to the waitlist for{' '}
+              <strong>{name}</strong>. If someone cancels, you'll be the first to know.
+            </p>
+
+            {/* waitlist info card */}
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 14,
+              padding: '20px 24px',
+              marginBottom: 32,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
+                What happens next
+              </div>
+              {[
+                "We'll notify you by email if a seat becomes available",
+                "You'll have 24 hours to confirm your booking",
+                "No payment has been taken yet",
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div style={{
+                    width: 22, height: 22,
+                    background: 'var(--ink)',
+                    borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--paper)', fontSize: 11, fontWeight: 700,
+                    flexShrink: 0, marginTop: 1,
+                  }}>
+                    {i + 1}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 14 }}>
+              <button className="btn-large" onClick={() => onNav('home')}>
+                Back to Home
+              </button>
+              <button className="btn-large-ghost" onClick={() => onNav('explore')}>
+                Browse Other Events
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* order summary still visible on right */}
+        <div className="booking-side">
+          <div className="order-heading">Event Details</div>
+          <div className="order-event-card">
+            <div className="oec-thumb"><EventVisual idx={0} /></div>
+            <div className="oec-body">
+              <div className="oec-name">{name}</div>
+              <div className="oec-meta">
+                {formatDate(rawTime)}{venue ? ` · ${venue}` : ''}
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.8, marginTop: 8 }}>
+            You have been added to the waitlist. No charges have been made.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── NORMAL PAYMENT FORM ──
   return (
     <div className="booking-layout">
 
@@ -206,7 +307,6 @@ export default function PaymentPage({ data, onNav }) {
                 onChange={e => setUpiId(e.target.value)}
               />
             </div>
-            {/* quick select buttons */}
             <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
               {['GPay', 'PhonePe', 'Paytm'].map(app => (
                 <button
@@ -281,7 +381,6 @@ export default function PaymentPage({ data, onNav }) {
       <div className="booking-side">
         <div className="order-heading">Order Summary</div>
 
-        {/* event card */}
         <div className="order-event-card">
           <div className="oec-thumb">
             <EventVisual idx={0} />
@@ -294,7 +393,6 @@ export default function PaymentPage({ data, onNav }) {
           </div>
         </div>
 
-        {/* price breakdown */}
         <div className="price-breakdown">
 
           <div className="pb-row">
