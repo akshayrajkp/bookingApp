@@ -10,4 +10,5 @@ public class BookingRequestDTO {
     private int quantity;
     private List<String> seats;
     private String paymentMethod;  // "card" or "upi"
+    private double totalAmount;
 }
