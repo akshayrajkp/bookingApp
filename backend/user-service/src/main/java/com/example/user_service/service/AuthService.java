@@ -49,4 +49,9 @@ public class AuthService {
                 .token(token)
                 .build();
     }
+
+    public User getMe(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

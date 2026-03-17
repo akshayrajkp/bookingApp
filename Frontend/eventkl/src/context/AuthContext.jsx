@@ -1,5 +1,5 @@
-import { createContext, useContext, useState } from 'react';
-import { login as loginApi } from '../api/userApi';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { login as loginApi, getMe as getMeApi } from '../api/userApi';
 
 const AuthContext = createContext(null);
 
@@ -14,12 +14,23 @@ export function AuthProvider({ children }) {
     }
   });
 
+  // Silently resolve full user profile (with ID) if missing from token
+  useEffect(() => {
+    if (user && !user.id) {
+      getMeApi()
+        .then(res => setUser(res.data))
+        .catch(err => console.error('Silent profile fetch failed:', err));
+    }
+  }, [user]);
+
   const login = async (email, password) => {
     const res = await loginApi({ email, password });
-    // your AuthResponse returns a token field — adjust if your field name differs
     const { token } = res.data;
     sessionStorage.setItem('token', token);
-    setUser(JSON.parse(atob(token.split('.')[1])));
+    const decoded = JSON.parse(atob(token.split('.')[1]));
+    // If the new token already has ID (from my previous fix), great.
+    // If not, the useEffect above will catch it.
+    setUser(decoded);
   };
 
   const logout = () => {

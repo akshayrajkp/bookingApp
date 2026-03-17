@@ -9,3 +9,7 @@ export const register = (data) => api.post('/auth/register', data);
 // Body: { email, password }
 // Returns: AuthResponse { token, ... }
 export const login = (data) => api.post('/auth/login', data);
+
+// GET /api/auth/me
+// Returns: Full User object { id, firstName, lastName, email, role }
+export const getMe = () => api.get('/auth/me');
