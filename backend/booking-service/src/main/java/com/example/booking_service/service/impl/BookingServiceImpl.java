@@ -151,7 +151,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDTO> getBookingsByUser(Long userId) {
-        return bookingRepository.findByUserId(userId).stream()
+        return bookingRepository.findByUserId(userId)
+                .stream()
                 .map(b -> BookingResponseDTO.builder()
                         .bookingId(b.getId())
                         .status(b.getStatus())
@@ -160,9 +161,10 @@ public class BookingServiceImpl implements BookingService {
                         .quantity(b.getQuantity())
                         .seats(b.getSeats())
                         .paymentMethod(b.getPaymentMethod())
-                        .bookingTime(b.getBookingTime() != null ? b.getBookingTime().toString() : null)
+                        .bookingTime(b.getBookingTime().toString())
                         .totalAmount(b.getTotalAmount())
-                        .build())
-                .collect(Collectors.toList());
+                        .build()
+                )
+                .collect(java.util.stream.Collectors.toList());
     }
 }
