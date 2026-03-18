@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -145,5 +147,22 @@ public class BookingServiceImpl implements BookingService {
                 .bookingTime(saved.getBookingTime().toString())
                 .totalAmount(saved.getTotalAmount())
                 .build();
+    }
+
+    @Override
+    public List<BookingResponseDTO> getBookingsByUser(Long userId) {
+        return bookingRepository.findByUserId(userId).stream()
+                .map(b -> BookingResponseDTO.builder()
+                        .bookingId(b.getId())
+                        .status(b.getStatus())
+                        .eventId(b.getEventId())
+                        .userId(b.getUserId())
+                        .quantity(b.getQuantity())
+                        .seats(b.getSeats())
+                        .paymentMethod(b.getPaymentMethod())
+                        .bookingTime(b.getBookingTime() != null ? b.getBookingTime().toString() : null)
+                        .totalAmount(b.getTotalAmount())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
