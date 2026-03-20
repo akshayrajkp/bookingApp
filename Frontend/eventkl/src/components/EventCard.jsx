@@ -1,15 +1,5 @@
-import EventVisual from './EventVisual';
+import ImageSlider from './ImageSlider';
 import '../styles/EventCard.css';
-
-// Safely reads field names from your Spring Boot Event entity.
-// Your entity may use: name, eventName, title  →  we try all three.
-// Same for venue, category, price, availableSeats, totalSeats.
-function field(event, ...keys) {
-  for (const k of keys) {
-    if (event[k] !== undefined && event[k] !== null) return event[k];
-  }
-  return null;
-}
 
 export default function EventCard({ event, idx, onNav }) {
   const name     = event.name          ?? 'Untitled Event';
@@ -18,6 +8,13 @@ export default function EventCard({ event, idx, onNav }) {
   const date     = event.eventTime     ?? '';
   const price    = event.price         ?? 0;
   const seats    = event.availableSeats;
+
+  // support both single imageUrl and multiple images array
+  const images = event.images?.length
+    ? event.images
+    : event.imageUrl
+      ? [event.imageUrl]
+      : [];
 
   const formatDate = (raw) => {
     if (!raw) return '';
@@ -28,19 +25,29 @@ export default function EventCard({ event, idx, onNav }) {
 
   const displayDate  = formatDate(date);
   const displayPrice = price === 0 ? 'Free' : `₹${price}`;
-  const displaySeats = seats != null ? `${seats} seats left` : '';
+  const displaySeats = Array.isArray(seats)
+    ? `${seats.length} seats left`
+    : seats != null ? `${seats} seats left` : '';
 
   return (
     <div className="ecard" onClick={() => onNav('detail', event)}>
+
+      {/* image slider — auto-slides every 2s */}
       <div className="ecard-thumb">
-        <EventVisual idx={idx} />
+        <ImageSlider
+          images={images}
+          alt={name}
+          idx={idx}
+          height="180px"
+        />
       </div>
+
       <div className="ecard-body">
-      <div className="ecard-cat">{category}</div>
-      <div className="ecard-name">{name}</div>
-      <div className="ecard-venue">
-        {displayDate && `${displayDate} · `}{venue}
-      </div>
+        <div className="ecard-cat">{category}</div>
+        <div className="ecard-name">{name}</div>
+        <div className="ecard-venue">
+          {displayDate && `${displayDate} · `}{venue}
+        </div>
         <div className="ecard-footer">
           <div>
             <div className="ecard-price">{displayPrice}</div>
@@ -54,6 +61,7 @@ export default function EventCard({ event, idx, onNav }) {
           </button>
         </div>
       </div>
+
     </div>
   );
 }

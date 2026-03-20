@@ -386,7 +386,14 @@ export default function MyTicketsPage({ onNav }) {
                     onClick={() => setSelected(t)}
                   >
                     <div className="mtc-thumb">
-                      <EventVisual idx={i} />
+                      {ev.imageUrl
+                        ? <img
+                            src={ev.imageUrl}
+                            alt={ev.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          />
+                        : <EventVisual idx={i} />
+                      }
                     </div>
                     <div className="mtc-body">
                       <div className="mtc-name">

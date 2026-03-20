@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import '../styles/DetailPage.css';
+import ImageSlider from '../components/ImageSlider';
 import '../styles/shared.css';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -90,24 +91,18 @@ export default function DetailPage({ event, onNav }) {
 
         {/* Hero visual */}
         <div className="detail-visual-wide">
-          <div style={{ position: 'absolute', inset: 0 }}>
-            <div style={{
-              position: 'absolute', top: 30, left: 30, width: 260, height: 200,
-              backgroundImage: 'repeating-linear-gradient(-45deg,var(--border) 0,var(--border) .5px,transparent 0,transparent 50%)',
-              backgroundSize: '7px 7px', opacity: .7,
-            }} />
-            <div style={{
-              position: 'absolute', bottom: -40, right: -40, width: 380, height: 340,
-              background: 'var(--ink)', borderRadius: '60% 40% 70% 30% / 50% 60% 40% 55%',
-              opacity: .07,
-            }} />
-            <div style={{
-              position: 'absolute', bottom: -30, right: -20, width: 300, height: 260,
-              background: 'var(--ink)', borderRadius: '60% 40% 70% 30% / 50% 60% 40% 55%',
-            }} />
-          </div>
+          <ImageSlider
+            images={
+              event.images?.length
+                ? event.images
+                : event.imageUrl ? [event.imageUrl] : []
+            }
+            alt={name}
+            idx={0}
+            height="360px"
+          />
         </div>
-
+        
         {/* Category + title */}
         <div className="detail-cat">{category}</div>
         <h1 className="detail-h1">{name}</h1>
