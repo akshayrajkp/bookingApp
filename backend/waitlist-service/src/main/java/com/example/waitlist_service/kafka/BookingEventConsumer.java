@@ -15,7 +15,9 @@ public class BookingEventConsumer {
     public void onBookingCancelled(String message) {
         System.out.println("Received booking-cancelled: " + message);
         try {
-            Long eventId = Long.parseLong(message.trim());
+            // strip quotes if JSON serialized e.g. "\"12\"" → "12"
+            String cleaned = message.replaceAll("\"", "").trim();
+            Long eventId = Long.parseLong(cleaned);
             waitlistService.promoteNextUser(eventId);
         } catch (Exception e) {
             System.err.println("Error processing event: " + e.getMessage());

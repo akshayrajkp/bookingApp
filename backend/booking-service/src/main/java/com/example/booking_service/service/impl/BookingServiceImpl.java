@@ -12,69 +12,95 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
-    private final BookingRepository       bookingRepository;
-    private final EventServiceClient      eventServiceClient;
-    private final WaitlistServiceClient   waitlistServiceClient;
-    private final BookingEventProducer    bookingEventProducer;
+    private final BookingRepository bookingRepository;
+    private final EventServiceClient eventServiceClient;
+    private final WaitlistServiceClient waitlistServiceClient;
+    private final BookingEventProducer bookingEventProducer;
 
     @Override
     public BookingResponseDTO createBooking(BookingRequestDTO request) {
 
-        // 1. check if event has any available seats
+        // Null safety for seats
+        List<String> seats = request.getSeats() != null ? request.getSeats() : Collections.emptyList();
+
+        // 1. check availability
         Boolean available = eventServiceClient.checkAvailability(request.getEventId());
 
-        // 2. no seats available — add user to waitlist
+        // 2. IF NOT AVAILABLE → WAITLIST FLOW
         if (!available) {
+
+            // call waitlist service
             waitlistServiceClient.joinWaitlist(
                     request.getEventId(),
                     request.getUserId()
             );
 
-            System.out.println("Event full. User " + request.getUserId()
+            System.out.println("Event full → User " + request.getUserId()
                     + " added to waitlist for event " + request.getEventId());
 
-            return BookingResponseDTO.builder()
-                    .status("WAITLISTED")
-                    .eventId(request.getEventId())
+            // ✅ SAVE WAITLISTED BOOKING
+            Booking booking = Booking.builder()
                     .userId(request.getUserId())
+                    .eventId(request.getEventId())
+                    .quantity(request.getQuantity())
+                    .seats(seats)
+                    .paymentMethod(request.getPaymentMethod())
+                    .status("WAITLISTED")
+                    .bookingTime(LocalDateTime.now())
+                    .totalAmount(request.getTotalAmount())
                     .build();
+
+            Booking saved = bookingRepository.save(booking);
+
+            return mapToResponse(saved);
         }
 
-        // 3. try to reserve each selected seat in event-service
+        // 3. TRY SEAT RESERVATION
         try {
-            request.getSeats().forEach(seat ->
-                    eventServiceClient.reserveSeat(request.getEventId(), seat)
-            );
+            for (String seat : seats) {
+                eventServiceClient.reserveSeat(request.getEventId(), seat);
+            }
         } catch (Exception e) {
-            // seat reservation failed mid-flow — add to waitlist
-            System.out.println("Seat reservation failed: " + e.getMessage()
-                    + " — adding user " + request.getUserId() + " to waitlist");
 
+            System.out.println("Seat reservation failed → " + e.getMessage()
+                    + " → adding user " + request.getUserId() + " to waitlist");
+
+            // add to waitlist
             waitlistServiceClient.joinWaitlist(
                     request.getEventId(),
                     request.getUserId()
             );
 
-            return BookingResponseDTO.builder()
-                    .status("WAITLISTED")
-                    .eventId(request.getEventId())
+            // ✅ SAVE WAITLISTED BOOKING
+            Booking booking = Booking.builder()
                     .userId(request.getUserId())
+                    .eventId(request.getEventId())
+                    .quantity(request.getQuantity())
+                    .seats(seats)
+                    .paymentMethod(request.getPaymentMethod())
+                    .status("WAITLISTED")
+                    .bookingTime(LocalDateTime.now())
+                    .totalAmount(request.getTotalAmount())
                     .build();
+
+            Booking saved = bookingRepository.save(booking);
+
+            return mapToResponse(saved);
         }
 
-        // 4. all seats reserved — save confirmed booking
+        // 4. SUCCESS → CONFIRMED BOOKING
         Booking booking = Booking.builder()
                 .userId(request.getUserId())
                 .eventId(request.getEventId())
                 .quantity(request.getQuantity())
-                .seats(request.getSeats())
+                .seats(seats)
                 .paymentMethod(request.getPaymentMethod())
                 .status("CONFIRMED")
                 .bookingTime(LocalDateTime.now())
@@ -83,26 +109,15 @@ public class BookingServiceImpl implements BookingService {
 
         Booking saved = bookingRepository.save(booking);
 
-        // 5. publish booking-created to Kafka
-        // notification-service consumes this and sends confirmation email
+        // 5. SEND KAFKA EVENT
         bookingEventProducer.sendBookingCreatedEvent(saved);
 
-        System.out.println("Booking confirmed. ID: " + saved.getId()
+        System.out.println("Booking CONFIRMED → ID: " + saved.getId()
                 + " | User: " + saved.getUserId()
                 + " | Event: " + saved.getEventId()
                 + " | Seats: " + saved.getSeats());
 
-        return BookingResponseDTO.builder()
-                .bookingId(saved.getId())
-                .status(saved.getStatus())
-                .eventId(saved.getEventId())
-                .userId(saved.getUserId())
-                .quantity(saved.getQuantity())
-                .seats(saved.getSeats())
-                .paymentMethod(saved.getPaymentMethod())
-                .bookingTime(saved.getBookingTime().toString())
-                .totalAmount(saved.getTotalAmount())
-                .build();
+        return mapToResponse(saved);
     }
 
     @Override
@@ -112,59 +127,51 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        // 2. check if already cancelled
+        // 2. check status
         if ("CANCELLED".equals(booking.getStatus())) {
             throw new RuntimeException("Booking already cancelled");
         }
 
-        // 3. release each seat back to event-service
-        booking.getSeats().forEach(seat ->
-                eventServiceClient.releaseSeat(booking.getEventId(), seat)
-        );
+        // 3. release seats ONLY if confirmed
+        if ("CONFIRMED".equals(booking.getStatus())) {
+            booking.getSeats().forEach(seat ->
+                    eventServiceClient.releaseSeat(booking.getEventId(), seat)
+            );
+        }
 
-        // 4. update status to CANCELLED
+        // 4. update status
         booking.setStatus("CANCELLED");
         Booking saved = bookingRepository.save(booking);
 
-        // 5. publish booking-cancelled to Kafka
-        // waitlist-service consumes this and promotes next user from Redis queue
-        bookingEventProducer.sendBookingCancelledEvent(
-                saved.getEventId().toString()
-        );
+        // 5. Kafka → promote next user from waitlist
+        bookingEventProducer.sendBookingCancelledEvent(saved.getEventId());
 
-        System.out.println("Booking cancelled. ID: " + saved.getId()
-                + " | Event: " + saved.getEventId()
-                + " | Seats released: " + saved.getSeats());
+        System.out.println("Booking CANCELLED → ID: " + saved.getId()
+                + " | Event: " + saved.getEventId());
 
-        return BookingResponseDTO.builder()
-                .bookingId(saved.getId())
-                .status(saved.getStatus())
-                .eventId(saved.getEventId())
-                .userId(saved.getUserId())
-                .quantity(saved.getQuantity())
-                .seats(saved.getSeats())
-                .paymentMethod(saved.getPaymentMethod())
-                .bookingTime(saved.getBookingTime().toString())
-                .totalAmount(saved.getTotalAmount())
-                .build();
+        return mapToResponse(saved);
     }
 
     @Override
     public List<BookingResponseDTO> getBookingsByUser(Long userId) {
         return bookingRepository.findByUserId(userId)
                 .stream()
-                .map(b -> BookingResponseDTO.builder()
-                        .bookingId(b.getId())
-                        .status(b.getStatus())
-                        .eventId(b.getEventId())
-                        .userId(b.getUserId())
-                        .quantity(b.getQuantity())
-                        .seats(b.getSeats())
-                        .paymentMethod(b.getPaymentMethod())
-                        .bookingTime(b.getBookingTime().toString())
-                        .totalAmount(b.getTotalAmount())
-                        .build()
-                )
-                .collect(java.util.stream.Collectors.toList());
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // 🔥 COMMON MAPPER METHOD (clean code)
+    private BookingResponseDTO mapToResponse(Booking booking) {
+        return BookingResponseDTO.builder()
+                .bookingId(booking.getId())
+                .status(booking.getStatus())
+                .eventId(booking.getEventId())
+                .userId(booking.getUserId())
+                .quantity(booking.getQuantity())
+                .seats(booking.getSeats())
+                .paymentMethod(booking.getPaymentMethod())
+                .bookingTime(booking.getBookingTime().toString())
+                .totalAmount(booking.getTotalAmount())
+                .build();
     }
 }
