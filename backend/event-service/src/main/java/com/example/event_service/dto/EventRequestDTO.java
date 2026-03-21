@@ -24,5 +24,5 @@ public class EventRequestDTO {
 
     private List<String> availableSeats;
 
-    private String imageUrl;
+    private List<String> images;
 }

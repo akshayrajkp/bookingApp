@@ -46,5 +46,9 @@ public class Event {
     @Builder.Default
     private List<String> availableSeats = new ArrayList<>();
 
-    private String imageUrl;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "event_images",
+            joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "image_url")
+    private List<String> images = new ArrayList<>();
 }

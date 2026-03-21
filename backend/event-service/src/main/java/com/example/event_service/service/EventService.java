@@ -28,7 +28,9 @@ public class EventService {
                 .eventTime(request.getEventTime())
                 .totalSeats(request.getTotalSeats())
                 .availableSeats(new ArrayList<>(request.getAvailableSeats()))
-                .imageUrl(request.getImageUrl())
+                .images(request.getImages() != null
+                        ? new ArrayList<>(request.getImages())
+                        : new ArrayList<>())
                 .build();
 
         return eventRepository.save(event);
@@ -61,7 +63,6 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        // get a mutable copy of the seats list
         List<String> seats = new ArrayList<>(event.getAvailableSeats());
 
         System.out.println("reserveSeat - eventId: " + eventId
