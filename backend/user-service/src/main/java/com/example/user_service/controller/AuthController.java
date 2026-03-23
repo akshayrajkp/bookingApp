@@ -33,4 +33,9 @@ public class AuthController {
         String email = jwtUtil.extractEmail(token.substring(7));
         return authService.getMe(email);
     }
+
+    @GetMapping("/users/{id}")
+    public User getUserById(@PathVariable Long id) {
+        return authService.getUserById(id);
+    }
 }

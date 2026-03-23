@@ -41,6 +41,12 @@ public class EventService {
         return eventRepository.findAll();
     }
 
+    // get event by id
+    public Event getEventById(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+    }
+
     // check seat availability
     @Transactional
     public boolean checkAvailability(Long eventId) {
