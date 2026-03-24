@@ -1,5 +1,6 @@
 package com.example.notification_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BookingEventDTO {
     private Long id;
     private Long userId;
@@ -19,6 +21,5 @@ public class BookingEventDTO {
     private List<String> seats;
     private String paymentMethod;
     private String status;
-    private String bookingTime;
     private Double totalAmount;
 }
