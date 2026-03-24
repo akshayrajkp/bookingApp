@@ -27,6 +27,12 @@ public class EventController {
         return eventService.getAllEvents();
     }
 
+    // get event by id
+    @GetMapping("/{eventId}")
+    public Event getEventById(@PathVariable Long eventId) {
+        return eventService.getEventById(eventId);
+    }
+
     // check if event has any available seats
     @GetMapping("/{eventId}/availability")
     public Boolean checkAvailability(@PathVariable Long eventId) {
