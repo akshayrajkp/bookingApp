@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #1e293b; /* Slate 800 */
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
+        }
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        .ticket-card {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #334155;
+        }
+        .event-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #a855f7;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .detail-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .detail-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #f8fafc;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            font-size: 14px;
+            color: #64748b;
+            border-top: 1px solid #334155;
+        }
+        .total-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>EventKL</h1>
+    </div>
+    <div class="content">
+        <div class="greeting">Hi <span th:text="${userName}">User</span>,</div>
+        <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 30px;">
+            Your booking is officially confirmed! Get ready for an incredible experience. Here are your ticket details:
+        </p>
+
+        <div class="ticket-card">
+            <h2 class="event-title" th:text="${eventName}">Event Title</h2>
+
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td width="50%" valign="top" style="padding-bottom: 20px;">
+                        <span class="detail-label">Quantity</span>
+                        <span class="detail-value" th:text="${quantity}">2</span>
+                    </td>
+                    <td width="50%" valign="top" style="padding-bottom: 20px;">
+                        <span class="detail-label">Total Paid</span>
+                        <span class="detail-value total-amount" th:text="'$' + ${totalAmount}">$100.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="50%" valign="top" th:if="${seats != null and !seats.isEmpty()}">
+                        <span class="detail-label">Seats</span>
+                        <span class="detail-value" th:text="${#strings.listJoin(seats, ', ')}">A1, A2</span>
+                    </td>
+                    <td width="50%" valign="top" th:if="${paymentMethod != null}">
+                        <span class="detail-label">Payment Method</span>
+                        <span class="detail-value" th:text="${#strings.toUpperCase(paymentMethod)}">CARD</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p style="color: #cbd5e1; line-height: 1.6;">
+            Save this email for your records. Just show this confirmation email at the venue entrance. If you have any questions, feel free to reply directly to this message.
+        </p>
+    </div>
+
+    <div class="footer">
+        &copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> EventKL. All rights reserved.<br>
+        Creating unforgettable experiences.
+    </div>
+</div>
+</body>
+</html>

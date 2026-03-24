@@ -5,10 +5,13 @@ import com.example.notification_service.client.UserServiceClient;
 import com.example.notification_service.dto.BookingEventDTO;
 import com.example.notification_service.dto.EventDTO;
 import com.example.notification_service.dto.UserDTO;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +20,7 @@ public class NotificationService {
     private final JavaMailSender mailSender;
     private final UserServiceClient userServiceClient;
     private final EventServiceClient eventServiceClient;
+    private final TemplateEngine templateEngine;
 
     public void sendBookingSuccessEmail(BookingEventDTO bookingEvent) {
         try {
@@ -25,22 +29,32 @@ public class NotificationService {
             // Fetch Event
             EventDTO event = eventServiceClient.getEventById(bookingEvent.getEventId());
 
-            System.out.println("Sending email to " + user.getEmail() + " for event " + event.getTitle());
+            System.out.println("Sending HTML email to " + user.getEmail() + " for event " + event.getTitle());
 
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(user.getEmail());
-            message.setSubject("Booking Confirmation: " + event.getTitle());
-            message.setText("Hi " + user.getFirstName() + ",\n\n" +
-                    "Your booking for '" + event.getTitle() + "' has been confirmed!\n" +
-                    "Quantity: " + bookingEvent.getQuantity() + "\n" +
-                    "Total Amount: $" + bookingEvent.getTotalAmount() + "\n\n" +
-                    "Thank you for booking with us!");
+            Context context = new Context();
+            context.setVariable("userName", user.getFirstName());
+            context.setVariable("eventName", event.getTitle());
+            context.setVariable("quantity", bookingEvent.getQuantity());
+            context.setVariable("totalAmount", bookingEvent.getTotalAmount());
+            context.setVariable("seats", bookingEvent.getSeats());
+            context.setVariable("paymentMethod", bookingEvent.getPaymentMethod());
+
+            // Process template
+            String htmlContent = templateEngine.process("booking-success", context);
+
+            // Construct rich email
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(user.getEmail());
+            helper.setSubject("Booking Confirmed: " + event.getTitle());
+            helper.setText(htmlContent, true);
             
             mailSender.send(message);
-            System.out.println("Booking success email sent to " + user.getEmail());
+            System.out.println("Booking success HTML email sent to " + user.getEmail());
 
         } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
+            System.err.println("Failed to send HTML email: " + e.getMessage());
         }
     }
 
