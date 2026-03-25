@@ -13,7 +13,11 @@ api.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       sessionStorage.removeItem('token');
-      window.location.href = '/';
+      // Only redirect if we're not already at root, 
+      // otherwise it causes an infinite Refresh loop
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
     }
     return Promise.reject(err);
   }

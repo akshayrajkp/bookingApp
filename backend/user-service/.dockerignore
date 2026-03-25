@@ -1,0 +1,5 @@
+# Ignore everything except target/*.jar and the Dockerfile
+*
+!target/
+!target/*.jar
+!Dockerfile

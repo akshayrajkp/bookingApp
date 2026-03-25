@@ -14,7 +14,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - eventkl-network
     healthcheck:
@@ -75,14 +75,14 @@ services:
   # ── SERVICE REGISTRY ────────────────────────────────────────
 
   service-registry:
-    build: ./service-registry
+    build: ./backend/service-registry
     container_name: service-registry
     ports:
       - "8761:8761"
     networks:
       - eventkl-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/ || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -90,7 +90,7 @@ services:
   # ── MICROSERVICES ────────────────────────────────────────────
 
   user-service:
-    build: ./user-service
+    build: ./backend/user-service
     container_name: user-service
     ports:
       - "8081:8081"
@@ -106,7 +106,7 @@ services:
     restart: on-failure
 
   event-service:
-    build: ./event-service
+    build: ./backend/event-service
     container_name: event-service
     ports:
       - "8083:8083"
@@ -120,7 +120,7 @@ services:
     restart: on-failure
 
   booking-service:
-    build: ./booking-service
+    build: ./backend/booking-service
     container_name: booking-service
     ports:
       - "8082:8082"
@@ -136,7 +136,7 @@ services:
     restart: on-failure
 
   waitlist-service:
-    build: ./waitlist-service
+    build: ./backend/waitlist-service
     container_name: waitlist-service
     ports:
       - "8087:8087"
@@ -152,7 +152,7 @@ services:
     restart: on-failure
 
   notification-service:
-    build: ./notification-service
+    build: ./backend/notification-service
     container_name: notification-service
     ports:
       - "8086:8086"
@@ -166,7 +166,7 @@ services:
     restart: on-failure
 
   api-gateway:
-    build: ./api-gateway
+    build: ./backend/api-gateway
     container_name: api-gateway
     ports:
       - "8080:8080"
