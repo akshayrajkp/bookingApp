@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { login as loginApi, getMe as getMeApi } from '../api/userApi';
 
 const AuthContext = createContext(null);
@@ -14,14 +14,16 @@ export function AuthProvider({ children }) {
     }
   });
 
-  // Silently resolve full user profile (with ID) if missing from token
+  // Silently resolve full user profile (with ID) if missing from token — runs once on mount only
+  const hasFetchedRef = useRef(false);
   useEffect(() => {
-    if (user && !user.id) {
+    if (!hasFetchedRef.current && user && !user.id) {
+      hasFetchedRef.current = true;
       getMeApi()
         .then(res => setUser(res.data))
         .catch(err => console.error('Silent profile fetch failed:', err));
     }
-  }, [user]);
+  }, []);
 
   const login = async (email, password) => {
     const res = await loginApi({ email, password });

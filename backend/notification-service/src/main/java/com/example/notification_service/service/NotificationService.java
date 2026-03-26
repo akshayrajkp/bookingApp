@@ -29,11 +29,11 @@ public class NotificationService {
             // Fetch Event
             EventDTO event = eventServiceClient.getEventById(bookingEvent.getEventId());
 
-            System.out.println("Sending HTML email to " + user.getEmail() + " for event " + event.getTitle());
+            System.out.println("Sending HTML email to " + user.getEmail() + " for event " + event.getName());
 
             Context context = new Context();
             context.setVariable("userName", user.getFirstName());
-            context.setVariable("eventName", event.getTitle());
+            context.setVariable("eventName", event.getName());
             context.setVariable("quantity", bookingEvent.getQuantity());
             context.setVariable("totalAmount", bookingEvent.getTotalAmount());
             context.setVariable("seats", bookingEvent.getSeats());
@@ -47,7 +47,7 @@ public class NotificationService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(user.getEmail());
-            helper.setSubject("Booking Confirmed: " + event.getTitle());
+            helper.setSubject("Booking Confirmed: " + event.getName());
             helper.setText(htmlContent, true);
             
             mailSender.send(message);
